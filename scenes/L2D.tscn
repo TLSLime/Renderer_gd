@@ -1,0 +1,144 @@
+[gd_scene load_steps=5 format=3 uid="uid://dr6ijw6u2hjcu"]
+
+[ext_resource type="Script" uid="uid://dbjlwgiyrhjbr" path="res://src/main.gd" id="1_l2nff"]
+[ext_resource type="Script" uid="uid://1i0thlpuyk4i" path="res://src/sub_viewport.gd" id="2_ukhcq"]
+[ext_resource type="Script" uid="uid://cfdmc5ph5gldx" path="res://src/models.gd" id="3_agypr"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_tvgpa"]
+viewport_path = NodePath("Sprite2D/SubViewport")
+
+[node name="L2d" type="Node2D"]
+script = ExtResource("1_l2nff")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_repeat = 1
+position = Vector2(450, 450)
+texture = SubResource("ViewportTexture_tvgpa")
+
+[node name="SubViewport" type="SubViewport" parent="Sprite2D"]
+transparent_bg = true
+use_debanding = true
+mesh_lod_threshold = 0.6
+use_hdr_2d = true
+size = Vector2i(2048, 2048)
+script = ExtResource("2_ukhcq")
+
+[node name="Camera2D" type="Camera2D" parent="Sprite2D/SubViewport"]
+offset = Vector2(1024, 1024)
+zoom = Vector2(0.44, 0.44)
+
+[node name="GDCubismUserModel" type="GDCubismUserModel" parent="Sprite2D/SubViewport"]
+assets = "res://Live2D/models/hiyori_pro_zh/runtime/hiyori_pro_t11.model3.json"
+anim_loop = false
+anim_loop_fade_in = true
+anim_expression = ""
+anim_motion = ""
+ParamAngleX = 4.5802584
+ParamAngleY = 3.3375247
+ParamAngleZ = 0.73735243
+ParamCheek = 0.0
+ParamEyeLOpen = 1.0
+ParamEyeLSmile = 0.0
+ParamEyeROpen = 1.0
+ParamEyeRSmile = 0.0
+ParamEyeBallX = 0.0
+ParamEyeBallY = 0.0
+ParamBrowLY = 0.0
+ParamBrowRY = 0.0
+ParamBrowLX = 0.0
+ParamBrowRX = 0.0
+ParamBrowLAngle = 0.0
+ParamBrowRAngle = 0.0
+ParamBrowLForm = 0.0
+ParamBrowRForm = 0.0
+ParamMouthForm = 1.0
+ParamMouthOpenY = 0.0
+ParamBodyAngleX = 1.0454798
+ParamBodyAngleY = 0.0
+ParamBodyAngleZ = 0.0
+ParamBreath = 0.25986564
+ParamShoulder = 0.0
+ParamLeg = 1.0
+ParamArmLA = 0.0
+ParamArmRA = 0.0
+ParamArmLB = 0.0
+ParamArmRB = 0.0
+ParamHandLB = 10.0
+ParamHandRB = 10.0
+ParamHandL = 0.0
+ParamHandR = 0.0
+ParamBustY = 0.0
+ParamHairAhoge = 0.0
+ParamHairFront = -0.007276512
+ParamHairBack = 0.033955142
+ParamSideupRibbon = -0.21765831
+ParamRibbon = -0.029465102
+ParamSkirt = -0.030137628
+ParamSkirt2 = 0.0
+Param_Angle_Rotation_1_ArtMesh62 = -0.38750887
+Param_Angle_Rotation_2_ArtMesh62 = -0.11800289
+Param_Angle_Rotation_3_ArtMesh62 = -0.21555305
+Param_Angle_Rotation_4_ArtMesh62 = 1.6613996
+Param_Angle_Rotation_5_ArtMesh62 = -0.10631561
+Param_Angle_Rotation_6_ArtMesh62 = 0.0
+Param_Angle_Rotation_7_ArtMesh62 = 0.0
+Param_Angle_Rotation_1_ArtMesh61 = -0.38750887
+Param_Angle_Rotation_2_ArtMesh61 = -0.11800289
+Param_Angle_Rotation_3_ArtMesh61 = -0.21555305
+Param_Angle_Rotation_4_ArtMesh61 = 1.6613996
+Param_Angle_Rotation_5_ArtMesh61 = -0.10631561
+Param_Angle_Rotation_6_ArtMesh61 = 0.0
+Param_Angle_Rotation_7_ArtMesh61 = 0.0
+Param_Angle_Rotation_1_ArtMesh55 = -0.1075232
+Param_Angle_Rotation_2_ArtMesh55 = -0.023565888
+Param_Angle_Rotation_3_ArtMesh55 = -0.11533618
+Param_Angle_Rotation_4_ArtMesh55 = 0.012769699
+Param_Angle_Rotation_5_ArtMesh55 = -0.037157536
+Param_Angle_Rotation_6_ArtMesh55 = 0.05057454
+Param_Angle_Rotation_7_ArtMesh55 = 0.13186097
+Param_Angle_Rotation_1_ArtMesh54 = -0.1075232
+Param_Angle_Rotation_2_ArtMesh54 = -0.023565888
+Param_Angle_Rotation_3_ArtMesh54 = -0.11533618
+Param_Angle_Rotation_4_ArtMesh54 = 0.012769699
+Param_Angle_Rotation_5_ArtMesh54 = -0.037157536
+Param_Angle_Rotation_6_ArtMesh54 = 0.05057454
+Param_Angle_Rotation_7_ArtMesh54 = 0.13186097
+PartCore = 1.0
+PartCheek = 1.0
+PartBrow = 1.0
+PartEye = 1.0
+PartNose = 1.0
+PartMouth = 1.0
+PartFace = 1.0
+PartEar = 1.0
+PartHairSide = 1.0
+PartHairFront = 1.0
+PartHairBack = 1.0
+PartNeck = 1.0
+PartArmA = 1.0
+PartArmB = 0.0
+PartBody = 1.0
+PartEyeBall = 1.0
+ArtMesh55_Skinning = 1.0
+Part4 = 1.0
+ArtMesh54_Skinning = 1.0
+Part3 = 1.0
+ArtMesh61_Skinning = 1.0
+Part = 1.0
+ArtMesh62_Skinning = 1.0
+Part2 = 1.0
+unique_name_in_owner = true
+position = Vector2(1024, 1024)
+scale = Vector2(0.5, 0.5)
+script = ExtResource("3_agypr")
+
+[node name="GDCubismEffectBreath" type="GDCubismEffectBreath" parent="Sprite2D/SubViewport/GDCubismUserModel"]
+
+[node name="GDCubismEffectEyeBlink" type="GDCubismEffectEyeBlink" parent="Sprite2D/SubViewport/GDCubismUserModel"]
+
+[node name="GDCubismEffectCustom" type="GDCubismEffectCustom" parent="Sprite2D/SubViewport/GDCubismUserModel"]
+
+[node name="GDCubismEffectHitArea" type="GDCubismEffectHitArea" parent="Sprite2D/SubViewport/GDCubismUserModel"]
+
+[node name="GDCubismEffectTargetPoint" type="GDCubismEffectTargetPoint" parent="Sprite2D/SubViewport/GDCubismUserModel"]
+unique_name_in_owner = true

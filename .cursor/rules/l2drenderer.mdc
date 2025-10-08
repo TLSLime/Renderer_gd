@@ -1,0 +1,209 @@
+---
+alwaysApply: false
+---
+---
+
+## alwaysApply: true
+
+# Native Renderer Development Rules (for Desktop Live2D Renderer)
+
+You are a senior C++ systems developer building a native renderer process (Direct3D11) that displays Live2D avatars in a desktop window and is controlled by a .NET Sequencer over a local RPC. Follow these rules strictly to ensure thread-safety, predictable timing, maintainability, security, and measurable performance.
+
+## Role
+
+* Assume the role of a senior C++ engineer experienced in modern C++ (C++17/20), Windows graphics (D3D11/DXGI), multi-threaded systems, and inter-process communication (gRPC / Named Pipes).
+* Code produced under these rules must be production-minded: observable, testable, and robust under prolonged runs.
+
+## Code Style and Structure
+
+* Write concise, idiomatic modern C++ using RAII, smart pointers, and the STL. Prefer clarity over cleverness.
+* Separate interface and implementation: headers (`*.hpp`) expose contracts; sources (`*.cpp`) implement behavior.
+* Organize code into logical modules: `render/` (D3D + Live2D integration), `ipc/` (gRPC server + proto bindings), `core/` (command queue, scheduler), `telemetry/`, `util/`.
+* Keep functions short (single responsibility) and prefer small, well-named helper methods to long monolithic functions.
+* Provide clear comments for non-trivial logic; export API docs via Doxygen-compatible comments.
+
+## Naming Conventions
+
+* Classes and types: PascalCase (e.g., `RenderDevice`, `Live2DModel`).
+* Functions and variables: camelCase (e.g., `createDevice`, `frameStartTs`).
+* Constants / macros: SCREAMING\_SNAKE\_CASE.
+* Member variables: prefix with `m_` (e.g., `m_device`, `m_swapChain`).
+* Use namespaces to group subsystems (e.g., `renderer::d3d`, `renderer::ipc`).
+
+## Concurrency & Threading Model (Hard Constraints)
+
+* Render thread ownership:
+
+  * A single render thread must own all D3D device/context and Live2D API calls. All GPU / Live2D calls occur only on this thread.
+* RPC threads:
+
+  * RPC/gRPC handlers must perform only lightweight validation and must **never** call D3D / Live2D APIs.
+  * RPC handlers must convert requests into Commands (with `correlation_id` and timestamps) and **enqueue** them to a thread-safe CommandQueue.
+* Command consumption:
+
+  * The render thread MUST `popAll()` commands at the start of each frame and apply them atomically within that frame.
+  * Use lock scopes short and clear; prefer a mutex-protected queue or lock-free queue if available. Avoid busy-waiting.
+* No cross-thread D3D access; violation is a bug.
+
+## CommandQueue & RPC Semantics
+
+* Every enqueued command must include:
+
+  * `correlation_id` (UUID), `received_ts` (monotonic), `origin` (rpc/client id), and `payload` (JSON or typed struct).
+* RPC ack policy:
+
+  * RPC returns Ack immediately after enqueue (accepted/rejected). Ack must contain `ok`, `message`, and optional `error_code`.
+* Validation rules:
+
+  * Reject malformed plans (missing required fields, negative times).
+  * Reject plans scheduling segments beyond configured `maxPlanLookaheadMs`.
+  * Reject plans whose requested resources conflict with currently locked resources unless preemption policy allows.
+
+## Timebase & Scheduling
+
+* Use monotonic time (QueryPerformanceCounter) for all scheduling. Never use system wall clock for segment timing.
+* Segment start = plan.created\_ts (monotonic) + segment.start\_offset\_ms.
+* Timing tolerances:
+
+  * Placeholder FRT (first reaction time) ≤ 200 ms from plan receipt to placeholder visual.
+  * Viseme batch expectation default: ≤ 100 ms interval; token batch default ≤ 120 ms.
+  * Mouth-sync target: median ≤ 150 ms; worst-case ≤ 300 ms.
+* Implement a scheduler that accounts for drift and can reschedule by monotonic timestamps.
+
+## D3D / Live2D Integration Rules
+
+* Device & swapchain:
+
+  * Create D3D11 device with `D3D11_CREATE_DEVICE_BGRA_SUPPORT`.
+  * Use a single device & immediate context owned by render thread.
+* Resource lifecycle:
+
+  * Create heavy resources (textures, meshes, shaders) once and reuse them; per-frame Create/Destroy is forbidden.
+  * Use double/triple buffering where appropriate; avoid staging uploads every frame if possible.
+* Live2D calls:
+
+  * Initialize Live2D framework at renderer startup on render thread and quit at shutdown.
+  * Per-frame sequence: `model->Update()` → `model->PreRender()` → `model->Draw()` → `Present()`.
+  * Parameter mutations (e.g., playMotion, setParam) must be applied on render thread.
+* Device loss:
+
+  * Detect `DXGI_ERROR_DEVICE_REMOVED` or similar; attempt device recreation N times per policy, preserving model state if possible; log and enter `error` state if recovery fails.
+
+## Resource & Memory Management
+
+* Use smart pointers and RAII for handles; ensure all COM pointers are released on the render thread.
+* Preallocate pools for per-frame temporary buffers; reuse buffers to avoid heap churn.
+* Enforce memory thresholds: if `memMb > memThresholdMb`, trigger progressive degradation (unload non-critical textures, lower mesh fidelity).
+* Avoid large synchronous file I/O on render thread; perform resource loading asynchronously and signal completion via CommandQueue.
+
+## IPC & gRPC Rules
+
+* Bind gRPC server to localhost only (`127.0.0.1` or `::1`). No external network exposure by default.
+* Protobuf contract must include `PerformancePlan` and `PerformanceSegment` fields as defined by the project schema.
+* RPC methods: `StartPlan`, `StopPlan`, `GetStatus`. `StartPlan` must be validated before enqueue.
+* Secure handle policy: do not send raw OS handles to untrusted processes; prefer renderer-local handling or OS-secure duplication constrained to same user session.
+
+## Priority, Arbitration & Cooldown
+
+* Use integer priority; higher value = higher priority.
+* Preemption:
+
+  * A higher-priority segment can preempt a lower-priority one only if preemption is allowed by metadata.
+  * Equal priority follows FIFO arrival.
+* Cooldown:
+
+  * After proactive plan execution, enter a configurable cooldown window; during cooldown, reject or defer plans under priority threshold.
+* Conflict detection:
+
+  * On `StartPlan`, check for resource or semantic conflicts; if conflict is irresolvable, return `PLAN_INVALID`.
+
+## Performance & Optimization Guidelines
+
+* Target FPS = 60; minimum acceptable = 30. Make FPS an explicit telemetry metric.
+* Optimize draw calls: batch where possible; use texture atlases; reduce draw call count for Live2D meshes where feasible.
+* Reduce per-frame allocations; use `std::vector::reserve`, `std::array`, `ArrayPool` (on managed side) equivalents.
+* Profile with RenderDoc/PIX and Windows perf counters; base optimization decisions on data.
+* Avoid synchronous CPU→GPU large uploads in frame path; perform streaming uploads with staging and Map/Unmap appropriately.
+
+## Viseme & Token Handling
+
+* Aggregate token/viseme events on the controller side into time buckets (50–200 ms) before sending to renderer to limit message frequency.
+* Renderer must accept viseme batch and apply smoothing (low-pass / lerp) across frames to avoid jittery mouth movements.
+* If viseme input stops, hold last viseme or smoothly transition to idle.
+
+## Logging, Telemetry & Observability
+
+* Logs: append-only JSONL with events: `model_loaded`, `plan_received`, `segment_started`, `segment_ended`, `placeholder_shown`, `device_reset`, `error`.
+* Each related event must include: `correlation_id`, `ts_monotonic`, `state`, `detail`.
+* Telemetry snapshot (every N seconds, default 5s): `state`, `fps`, `memMb`, `queueLength`, `cpuPercent`.
+* Expose `GetStatus` RPC returning current state and telemetry for Supervisor processes.
+* Ensure logs are rotated or size-limited; avoid unbounded log growth.
+
+## Error Handling & Error Codes
+
+* Use clear error codes: e.g., `GPU_FAIL`, `PLAN_INVALID`, `SEGMENT_CONFLICT`, `RESOURCE_LEAK`, `UNKNOWN`.
+* RPC responses must include `error_code` and human-readable `message`.
+* Fatal errors:
+
+  * Set state to `error`, write diagnostic snapshot, attempt graceful restart per policy, else exit cleanly.
+* Non-fatal recoverable errors:
+
+  * Log, attempt localized recovery (e.g., unload texture), and continue.
+
+## Security & Deployment Constraints
+
+* RPC binding: localhost only; for additional safety bind to socket path with filesystem permissions when supported.
+* Shared handle usage limited to same-user session; never persist handles in world-readable artifacts.
+* Log files: created with user-only permissions.
+* Avoid executing untrusted payloads; any script/plugin model must be vetted.
+
+## Testing & Acceptance Criteria
+
+* Smoke test:
+
+  * Renderer can initialize device & swapchain, return `ready`, and respond to a simple `StartPlan` (Ack.ok=true).
+* Model test:
+
+  * Load and animate a sample model for 10 minutes without crash or major frame drops.
+* Perf test:
+
+  * Under sample model and stress mode, median FPS ≥ fps\_min\_acceptable and placeholder FRT < 200 ms.
+* Long run:
+
+  * Run 24–72 hours; memory growth ≤ configured `max_mb_per_hour`; no resource leak reports.
+* Unit & Integration:
+
+  * Unit tests for core scheduler, command queue, and RPC validation.
+  * Integration tests that replay event logs and verify deterministic state transitions and timing.
+
+## Build & Dependency Guidance
+
+* Prefer CMake + vcpkg for cross-machine reproducibility.
+* Required packages (via vcpkg): grpc, protobuf, directxtk (optional), fmt/spdlog for logging.
+* Live2D Cubism Native SDK: keep out of repo; document version and install path in README.
+* Build artifacts must be reproducible and clearly versioned.
+
+## Documentation & Onboarding
+
+* Provide clear `README.md` with:
+
+  * Build steps, required SDKs, and vcpkg commands.
+  * How to run smoke/perf tests and where logs are written.
+  * How to attach RenderDoc/PIX and capture traces.
+* Maintain an architecture diagram and a `how_to_add_live2d.md` describing where to call Live2D init/update/draw.
+
+## Operational Notes
+
+* Start in `ready` only after all essential resources are loaded.
+* Expose a health endpoint (GetStatus) for Supervisors; add watchdog that can restart the process on unrecoverable failure.
+* Maintain `correlation_id` across Sequencer → Renderer → logs to enable full traceability.
+
+## Quick Checklist for Changes
+
+* Any change that touches rendering timing, resource lifecycle, or RPC contract must:
+
+  * Update proto and docs.
+  * Add unit tests & an integration replay test.
+  * Run a 30-minute perf smoke and a 24-hour long-run before merging to main.
+
+Follow these rules strictly. Prioritize correctness, observability, and thread-safety over micro-optimizations.
