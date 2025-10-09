@@ -13,7 +13,7 @@ public partial class MouseDetection : Node
 		
 		if (_api != null)
 		{
-			// initializing as click-through
+			// 初始化为穿透模式，后续会根据像素检测动态调整
 			_api.SetClickThrough(true);
 		}
 	}

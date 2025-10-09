@@ -7,9 +7,12 @@
 本项目使用Godot引擎和Live2D Cubism SDK实现了一个高性能的桌面宠物渲染模块，支持：
 
 - Live2D模型渲染和动画
+- 完整的眼动追踪系统（眼球、头部、身体跟随鼠标）
 - 鼠标穿透功能（点击穿透到桌面）
 - 动态参数调整（表情、动作、缩放等）
 - 实时渲染设置控制面板
+- JSON配置系统（支持类型验证和自动转换）
+- 模块化架构（管理器模式，职责分离）
 - 性能监控和优化
 
 ## 系统要求
@@ -24,10 +27,16 @@
 ```
 renderer/
 ├── src/                    # 源代码目录
-│   ├── main.gd            # 主脚本（Live2D渲染逻辑）
-│   ├── models.gd          # 模型管理脚本
+│   ├── main.gd            # 主脚本（场景管理和初始化）
+│   ├── models.gd          # 模型基础脚本
 │   ├── sub_viewport.gd    # 子视口管理
 │   ├── ControlPanel.gd    # 控制面板脚本
+│   ├── ControlPanelManager.gd  # 控制面板管理器
+│   ├── ConfigManager.gd   # 配置管理器
+│   ├── EyeTrackingManager.gd   # 眼动追踪管理器
+│   ├── ModelManager.gd    # 模型管理器
+│   ├── AnimationManager.gd     # 动画管理器
+│   ├── HitAreaManager.gd  # 点击区域管理器
 │   ├── MouseDetection.cs  # 鼠标检测（C#）
 │   └── ApiManager.cs      # Windows API管理（C#）
 ├── scenes/                # 场景文件
@@ -179,6 +188,10 @@ func set_eye_open(value: float):
 - **编程语言**：GDScript + C#
 - **平台支持**：Windows 10/11
 - **窗口管理**：Windows API集成
+- **眼动追踪**：完整的鼠标跟随系统（眼球、头部、身体）
+- **配置管理**：JSON格式配置文件，支持类型验证和自动转换
+- **模块化架构**：管理器模式，职责分离，易于维护和扩展
+- **性能优化**：一次性加载，减少启动卡顿，优化调试输出
 
 ## 许可证
 
@@ -194,6 +207,29 @@ func set_eye_open(value: float):
 4. 发起Pull Request
 
 ## 更新日志
+
+### v0.0.8 (最新版本)
+- **重大修复**：
+  - 修复眼动追踪功能
+  - 修复模型切换后眼动追踪失效问题
+  - 实现眼球、头部、身体的完整跟随效果
+  - 优化眼动追踪参数范围和敏感度
+- **配置系统优化**：
+  - 改进JSON配置文件的类型转换处理
+  - 修复int/float类型转换导致的配置加载失败
+  - 实现配置验证和自动类型转换
+- **代码架构重构**：
+  - 将main.gd的职责分散到专门的管理器
+  - 新增EyeTrackingManager、ModelManager、AnimationManager等
+  - 提高代码可维护性和模块化程度
+- **启动流程优化**：
+  - 实现配置和模型的一次性加载
+  - 减少启动时的卡顿感
+  - 保持眼动追踪状态的连续性
+- **调试信息优化**：
+  - 大幅减少控制台输出冗余信息
+  - 保留核心错误和警告信息
+  - 提高调试效率
 
 ### v0.0.6
 - 基础Live2D渲染功能

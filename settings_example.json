@@ -1,0 +1,10 @@
+{
+	"model_index": 0,
+	"smaa": 0.10,
+	"debanding": true,
+	"mipmap": true,
+	"zoom": 0.44,
+	"resolution": 2048,
+	"hdr": true,
+	"lod": 0.6
+}

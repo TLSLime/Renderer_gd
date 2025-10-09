@@ -27,10 +27,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -162.0
-offset_top = -217.0
-offset_right = 161.0
-offset_bottom = 216.0
+offset_left = -250.0
+offset_top = -300.0
+offset_right = 249.0
+offset_bottom = 399.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -39,10 +39,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 15.0
-offset_top = 23.0
-offset_right = -15.0
-offset_bottom = -7.0
+offset_left = 81.0
+offset_top = 87.0
+offset_right = -70.0
+offset_bottom = -115.59912
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -64,6 +64,33 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="HSeparator" type="HSeparator" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ModelGroup" type="VBoxContainer" parent="MainPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ModelLabel" type="Label" parent="MainPanel/VBoxContainer/ModelGroup"]
+layout_mode = 2
+text = "模型切换"
+
+[node name="ModelContainer" type="HBoxContainer" parent="MainPanel/VBoxContainer/ModelGroup"]
+layout_mode = 2
+
+[node name="PrevModelButton" type="Button" parent="MainPanel/VBoxContainer/ModelGroup/ModelContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "◀"
+
+[node name="ModelOptionButton" type="OptionButton" parent="MainPanel/VBoxContainer/ModelGroup/ModelContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NextModelButton" type="Button" parent="MainPanel/VBoxContainer/ModelGroup/ModelContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "▶"
+
+[node name="HSeparatorModel" type="HSeparator" parent="MainPanel/VBoxContainer"]
 layout_mode = 2
 
 [node name="AntiAliasingGroup" type="VBoxContainer" parent="MainPanel/VBoxContainer"]
@@ -125,7 +152,7 @@ text = "缩放:"
 [node name="ZoomSlider" type="HSlider" parent="MainPanel/VBoxContainer/ScalingGroup/ZoomContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.2
+min_value = 0.01
 max_value = 1.0
 step = 0.01
 value = 0.44

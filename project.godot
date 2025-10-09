@@ -37,7 +37,6 @@ window/size/minimize_disabled=true
 window/size/maximize_disabled=true
 window/subwindows/embed_subwindows=false
 window/per_pixel_transparency/allowed=true
-window/vsync/vsync_mode=0
 window/size/always_on_top_level=1
 window/size/always_on_top_pause_mode=0
 
